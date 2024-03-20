@@ -36,15 +36,12 @@ jobs:
       - name: Print current branch name 
         run: | 
           echo "Current branch: ${{ steps.branch-names.outputs.current_branch }}"
-  
-      - name: 'Check yq'
-        run: |
-          which yq
-          yq --version
 
       - name: Retrieve version
         id: version-analyzer
         run: |
+          which yq
+          yq --version
           echo "VERSION=$(yq -r .version pubspec.yaml)" >> $GITHUB_OUTPUT
 
       - name: Stop if already delivered
@@ -64,6 +61,7 @@ jobs:
                 sha: context.sha
               })
             } catch(e) {
+              console.log(e)
               console.log('Tag does not exist yet for ${{ matrix.release-tag }}-${{env.VERSION}}')
               return
             }
