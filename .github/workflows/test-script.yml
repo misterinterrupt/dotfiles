@@ -1,0 +1,90 @@
+name: test script
+
+run-name: test script
+
+on: 
+  workflow_dispatch:
+
+jobs:
+
+  fastlane-deliver-android:
+    name: Build for ${{ matrix.target }}
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        target: [Android, iOS]
+        include:
+          - os: ubuntu-latest
+            target: Android
+            release-tag: "delivered-playstore"
+          - os: macos-latest
+            target: iOS
+            release-tag: "delivered-appstore"
+      fail-fast: false
+    steps:
+      - run: echo "${{ matrix.target }} delivery triggered by ${{ github.actor }} "
+      - uses: actions/checkout@v4
+        with: 
+          fetch-depth: 0
+      
+      - name: Get branch names.
+        id: branch-names
+        uses: tj-actions/branch-names@v8
+      
+      - name: Print current branch name 
+        run: | 
+          echo "Current branch: ${{ steps.branch-names.outputs.current_branch }}" 
+
+      - name: 'Setup yq'
+        uses: dcarbone/install-yq-action@v1.1.1
+        with:
+          version: '4.42.1'
+          download-compressed: true
+          force: true
+  
+      - name: 'Check yq'
+        run: |
+          which yq
+          yq --version
+
+      - name: Retrieve version
+        id: version-analyzer
+        run: |
+          echo "VERSION=$(yq -r .version pubspec.yaml)" >> $GITHUB_OUTPUT
+
+      - name: Stop if already delivered
+        if: matrix.target == 'Android'
+        uses: actions/github-script@v5
+        env: 
+          VERSION: ${{ steps.version-analyzer.outputs.VERSION }}
+        with:
+          script: |
+            console.log(`${{ matrix.release-tag }}-${{env.VERSION}}`)
+            let result = github.rest.git.getRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ matrix.release-tag }}-${{env.VERSION}}',
+              sha: context.sha
+            })
+            if(result.status != 200) {
+              core.setFailed('Release already delivered')
+            }
+
+      - name: Create tag
+        # temporarily android only
+        if: matrix.target == 'Android'
+        uses: actions/github-script@v5
+        env: 
+          VERSION: ${{ steps.version-analyzer.outputs.VERSION }}
+        with:
+          script: |
+            console.log(`${{ matrix.release-tag }}-${{env.VERSION}}`)
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ matrix.release-tag }}-${{env.VERSION}}',
+              sha: context.sha
+            })
+
