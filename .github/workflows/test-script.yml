@@ -53,20 +53,26 @@ jobs:
         env: 
           VERSION: ${{ steps.version-analyzer.outputs.VERSION }}
         with:
+          result-encoding: 'json'
           script: |
             console.log(`${{ matrix.release-tag }}-${{env.VERSION}}`)
-            try{
-              let result = await github.rest.git.getRef({
+            let req = await github.rest.git.getRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: 'refs/tags/${{ matrix.release-tag }}-${{env.VERSION}}',
                 sha: context.sha
               })
             } catch(e) {
+              console.log('Tag does not exist yet for ${{ matrix.release-tag }}-${{env.VERSION}}')
               return
             }
             console.log(result)
-            core.setFailed(`Release already delivered`)
+            core.setFailed('Tag already exists for ${{ matrix.release-tag }}-${{env.VERSION}}')
+            
+      - name: Stop when version already delivered
+        if: failure()
+        run: |
+          exit 1
 
       - name: Create tag
         # temporarily android only
