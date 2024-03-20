@@ -63,10 +63,10 @@ jobs:
                 sha: context.sha
               })
             } catch(e) {
-              # console.log(e)
               return
             }
-            core.setFailed('Release already delivered')
+            console.log(result)
+            core.setFailed(`Release already delivered`)
 
       - name: Create tag
         # temporarily android only
