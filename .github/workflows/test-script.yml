@@ -55,12 +55,13 @@ jobs:
         with:
           script: |
             console.log(`${{ matrix.release-tag }}-${{env.VERSION}}`)
-            let result = github.rest.git.getRef({
+            let result = await github.rest.git.getRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: 'refs/tags/${{ matrix.release-tag }}-${{env.VERSION}}',
               sha: context.sha
             })
+            console.log(result.status)
             if(result.status != 200) {
               core.setFailed('Release already delivered')
             }
