@@ -35,14 +35,7 @@ jobs:
       
       - name: Print current branch name 
         run: | 
-          echo "Current branch: ${{ steps.branch-names.outputs.current_branch }}" 
-
-      - name: 'Setup yq'
-        uses: dcarbone/install-yq-action@v1.1.1
-        with:
-          version: '4.42.1'
-          download-compressed: true
-          force: true
+          echo "Current branch: ${{ steps.branch-names.outputs.current_branch }}"
   
       - name: 'Check yq'
         run: |
