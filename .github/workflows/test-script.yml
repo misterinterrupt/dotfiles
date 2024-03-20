@@ -55,8 +55,9 @@ jobs:
         with:
           result-encoding: 'json'
           script: |
-            console.log(`${{ matrix.release-tag }}-${{env.VERSION}}`)
-            let req = await github.rest.git.getRef({
+            console.log(`Looking for delivered tag: ${{ matrix.release-tag }}-${{env.VERSION}}`)
+            try {
+              await github.rest.git.getRef({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 ref: 'refs/tags/${{ matrix.release-tag }}-${{env.VERSION}}',
@@ -66,7 +67,6 @@ jobs:
               console.log('Tag does not exist yet for ${{ matrix.release-tag }}-${{env.VERSION}}')
               return
             }
-            console.log(result)
             core.setFailed('Tag already exists for ${{ matrix.release-tag }}-${{env.VERSION}}')
             
       - name: Stop when version already delivered
